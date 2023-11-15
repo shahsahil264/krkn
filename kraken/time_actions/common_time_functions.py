@@ -7,8 +7,10 @@ import random
 from ..cerberus import setup as cerberus
 from ..invoke import command as runcommand
 from krkn_lib.k8s import KrknKubernetes
-from krkn_lib.telemetry import KrknTelemetry
+from krkn_lib.telemetry.k8s import KrknTelemetryKubernetes
 from krkn_lib.models.telemetry import ScenarioTelemetry
+from krkn_lib.utils.functions import get_yaml_item_value, log_exception
+
 
 # krkn_lib
 def pod_exec(pod_name, command, namespace, container_name, kubecli:KrknKubernetes):
@@ -88,7 +90,7 @@ def skew_time(scenario, kubecli:KrknKubernetes):
         return "node", node_names
 
     elif "pod" in scenario["object_type"]:
-        container_name = scenario.get("container_name", "")
+        container_name = get_yaml_item_value(scenario, "container_name", "")
         pod_names = []
         if "object_name" in scenario.keys() and scenario["object_name"]:
             for name in scenario["object_name"]:
@@ -308,7 +310,7 @@ def check_date_time(object_type, names, kubecli:KrknKubernetes):
 
 
 # krkn_lib
-def run(scenarios_list, config, wait_duration, kubecli:KrknKubernetes, telemetry: KrknTelemetry) -> (list[str], list[ScenarioTelemetry]):
+def run(scenarios_list, config, wait_duration, kubecli:KrknKubernetes, telemetry: KrknTelemetryKubernetes) -> (list[str], list[ScenarioTelemetry]):
     failed_scenarios = []
     scenario_telemetries: list[ScenarioTelemetry] = []
     for time_scenario_config in scenarios_list:
@@ -338,7 +340,7 @@ def run(scenarios_list, config, wait_duration, kubecli:KrknKubernetes, telemetry
                     )
         except (RuntimeError, Exception):
             scenario_telemetry.exitStatus = 1
-            telemetry.log_exception(time_scenario_config)
+            log_exception(time_scenario_config)
             failed_scenarios.append(time_scenario_config)
         else:
             scenario_telemetry.exitStatus = 0

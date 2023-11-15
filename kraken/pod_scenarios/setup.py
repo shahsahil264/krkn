@@ -7,9 +7,11 @@ import arcaflow_plugin_kill_pod
 import kraken.cerberus.setup as cerberus
 import kraken.post_actions.actions as post_actions
 from krkn_lib.k8s import KrknKubernetes
-from krkn_lib.telemetry import KrknTelemetry
+from krkn_lib.telemetry.k8s import KrknTelemetryKubernetes
 from krkn_lib.models.telemetry import ScenarioTelemetry
 from arcaflow_plugin_sdk import serialization
+from krkn_lib.utils.functions import get_yaml_item_value, log_exception
+
 
 # Run pod based scenarios
 def run(kubeconfig_path, scenarios_list, config, failed_post_scenarios, wait_duration):
@@ -65,6 +67,7 @@ def run(kubeconfig_path, scenarios_list, config, failed_post_scenarios, wait_dur
         cerberus.publish_kraken_status(config, failed_post_scenarios, start_time, end_time)
     return failed_post_scenarios
 
+
 # krkn_lib
 def container_run(kubeconfig_path,
                   scenarios_list,
@@ -72,7 +75,7 @@ def container_run(kubeconfig_path,
                   failed_post_scenarios,
                   wait_duration,
                   kubecli: KrknKubernetes,
-                  telemetry: KrknTelemetry) -> (list[str], list[ScenarioTelemetry]):
+                  telemetry: KrknTelemetryKubernetes) -> (list[str], list[ScenarioTelemetry]):
 
     failed_scenarios = []
     scenario_telemetries: list[ScenarioTelemetry] = []
@@ -115,7 +118,7 @@ def container_run(kubeconfig_path,
                     cerberus.publish_kraken_status(config, failed_post_scenarios, start_time, end_time)
                 except (RuntimeError, Exception):
                     failed_scenarios.append(container_scenario_config[0])
-                    telemetry.log_exception(container_scenario_config[0])
+                    log_exception(container_scenario_config[0])
                     scenario_telemetry.exitStatus = 1
                     # removed_exit
                     # sys.exit(1)
@@ -127,15 +130,22 @@ def container_run(kubeconfig_path,
     return failed_scenarios, scenario_telemetries
 
 
-
 def container_killing_in_pod(cont_scenario, kubecli: KrknKubernetes):
-    scenario_name = cont_scenario.get("name", "")
-    namespace = cont_scenario.get("namespace", "*")
-    label_selector = cont_scenario.get("label_selector", None)
-    pod_names = cont_scenario.get("pod_names", [])
-    container_name = cont_scenario.get("container_name", "")
-    kill_action = cont_scenario.get("action", "kill 1")
-    kill_count = cont_scenario.get("count", 1)
+    scenario_name = get_yaml_item_value(cont_scenario, "name", "")
+    namespace = get_yaml_item_value(cont_scenario, "namespace", "*")
+    label_selector = get_yaml_item_value(cont_scenario, "label_selector", None)
+    pod_names = get_yaml_item_value(cont_scenario, "pod_names", [])
+    container_name = get_yaml_item_value(cont_scenario, "container_name", "")
+    kill_action = get_yaml_item_value(cont_scenario, "action", 1)
+    kill_count = get_yaml_item_value(cont_scenario, "count", 1)
+    if not isinstance(kill_action, int):
+        logging.error("Please make sure the action parameter defined in the "
+                      "config is an integer")
+        raise RuntimeError()
+    if (kill_action < 1) or (kill_action > 15):
+        logging.error("Only 1-15 kill signals are supported.")
+        raise RuntimeError()
+    kill_action = "kill " + str(kill_action)
     if type(pod_names) != list:
         logging.error("Please make sure your pod_names are in a list format")
         # removed_exit

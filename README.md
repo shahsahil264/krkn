@@ -30,6 +30,8 @@ The guide is hosted at https://redhat-chaos.github.io/krkn.
 ### How to Get Started
 Instructions on how to setup, configure and run Kraken can be found at [Installation](docs/installation.md).
 
+You may consider utilizing the chaos recommendation tool prior to initiating the chaos runs to profile the application service(s) under test. This tool discovers a list of Krkn scenarios with a high probability of causing failures or disruptions to your application service(s). The tool can be accessed at [Chaos-Recommender](utils/chaos_recommender/README.md).
+
 See the [getting started doc](docs/getting_started.md) on support on how to get started with your own custom scenario or editing current scenarios for your specific usage.
 
 After installation, refer back to the below sections for supported scenarios and how to tweak the kraken config to load them on your cluster.
@@ -66,7 +68,7 @@ Scenario type               | Kubernetes    | OpenShift
 [Time Scenarios](docs/time_scenarios.md) | :x: | :heavy_check_mark: |
 [Hog Scenarios: CPU, Memory](docs/arcaflow_scenarios.md) | :heavy_check_mark: | :heavy_check_mark: |
 [Cluster Shut Down Scenarios](docs/cluster_shut_down_scenarios.md) | :heavy_check_mark: | :heavy_check_mark: |
-[Namespace Scenarios](docs/namespace_scenarios.md) | :heavy_check_mark: | :heavy_check_mark: |
+[Service Disruption Scenarios](docs/service_disruption_scenarios.md.md) | :heavy_check_mark: | :heavy_check_mark: |
 [Zone Outage Scenarios](docs/zone_outage.md) | :heavy_check_mark: | :heavy_check_mark: |
 [Application_outages](docs/application_outages.md) | :heavy_check_mark: | :heavy_check_mark: |
 [PVC scenario](docs/pvc_scenario.md) | :heavy_check_mark: | :heavy_check_mark: |
@@ -107,11 +109,13 @@ Information on enabling and leveraging this feature can be found [here](docs/SLO
 
 Kraken supports injecting faults into [Open Cluster Management (OCM)](https://open-cluster-management.io/) and [Red Hat Advanced Cluster Management for Kubernetes (ACM)](https://www.redhat.com/en/technologies/management/advanced-cluster-management) managed clusters through [ManagedCluster Scenarios](docs/managedcluster_scenarios.md).
 
+
 ### Blogs and other useful resources
 - Blog post on introduction to Kraken: https://www.openshift.com/blog/introduction-to-kraken-a-chaos-tool-for-openshift/kubernetes
 - Discussion and demo on how Kraken can be leveraged to ensure OpenShift is reliable, performant and scalable: https://www.youtube.com/watch?v=s1PvupI5sD0&ab_channel=OpenShift
 - Blog post emphasizing the importance of making Chaos part of Performance and Scale runs to mimic the production environments: https://www.openshift.com/blog/making-chaos-part-of-kubernetes/openshift-performance-and-scalability-tests
 - Blog post on findings from Chaos test runs: https://cloud.redhat.com/blog/openshift/kubernetes-chaos-stories
+- Discussion with CNCF TAG App Delivery on Krkn workflow, features and addition to CNCF sandbox: [Github](https://github.com/cncf/sandbox/issues/44), [Tracker](https://github.com/cncf/tag-app-delivery/issues/465), [recording](https://www.youtube.com/watch?v=nXQkBFK_MWc&t=722s)
 
 
 ### Roadmap
@@ -129,5 +133,5 @@ Please read [this file]((CI/README.md#adding-a-test-case)) for more information 
 
 ### Community
 Key Members(slack_usernames/full name): paigerube14/Paige Rubendall, mffiedler/Mike Fiedler, ravielluri/Naga Ravi Chaitanya Elluri.
-* [**#sig-scalability on Kubernetes Slack**](https://kubernetes.slack.com)
+* [**#krkn on Kubernetes Slack**](https://kubernetes.slack.com)
 * [**#forum-chaos on CoreOS Slack internal to Red Hat**](https://coreos.slack.com)

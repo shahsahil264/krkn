@@ -5,12 +5,13 @@ import time
 import yaml
 from ..cerberus import setup as cerberus
 from krkn_lib.k8s import KrknKubernetes
-from krkn_lib.telemetry import KrknTelemetry
+from krkn_lib.telemetry.k8s import KrknTelemetryKubernetes
 from krkn_lib.models.telemetry import ScenarioTelemetry
+from krkn_lib.utils.functions import get_yaml_item_value, log_exception
 
 
 # krkn_lib
-def run(scenarios_list, config, kubecli: KrknKubernetes, telemetry: KrknTelemetry) -> (list[str], list[ScenarioTelemetry]):
+def run(scenarios_list, config, kubecli: KrknKubernetes, telemetry: KrknTelemetryKubernetes) -> (list[str], list[ScenarioTelemetry]):
     """
     Reads the scenario config and creates a temp file to fill up the PVC
     """
@@ -27,13 +28,21 @@ def run(scenarios_list, config, kubecli: KrknKubernetes, telemetry: KrknTelemetr
                 with open(app_config, "r") as f:
                     config_yaml = yaml.full_load(f)
                     scenario_config = config_yaml["pvc_scenario"]
-                    pvc_name = scenario_config.get("pvc_name", "")
-                    pod_name = scenario_config.get("pod_name", "")
-                    namespace = scenario_config.get("namespace", "")
-                    target_fill_percentage = scenario_config.get(
-                        "fill_percentage", "50"
+                    pvc_name = get_yaml_item_value(
+                        scenario_config, "pvc_name", ""
                     )
-                    duration = scenario_config.get("duration", 60)
+                    pod_name = get_yaml_item_value(
+                        scenario_config, "pod_name", ""
+                    )
+                    namespace = get_yaml_item_value(
+                        scenario_config, "namespace", ""
+                    )
+                    target_fill_percentage = get_yaml_item_value(
+                        scenario_config, "fill_percentage", "50"
+                    )
+                    duration = get_yaml_item_value(
+                        scenario_config, "duration", 60
+                    )
 
                     logging.info(
                         "Input params:\n"
@@ -307,7 +316,7 @@ def run(scenarios_list, config, kubecli: KrknKubernetes, telemetry: KrknTelemetr
         except (RuntimeError, Exception):
             scenario_telemetry.exitStatus = 1
             failed_scenarios.append(app_config)
-            telemetry.log_exception(app_config)
+            log_exception(app_config)
         else:
             scenario_telemetry.exitStatus = 0
         scenario_telemetries.append(scenario_telemetry)

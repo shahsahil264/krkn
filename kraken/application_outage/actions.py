@@ -4,12 +4,14 @@ import time
 import kraken.cerberus.setup as cerberus
 from jinja2 import Template
 import kraken.invoke.command as runcommand
-from krkn_lib.telemetry import KrknTelemetry
+from krkn_lib.telemetry.k8s import KrknTelemetryKubernetes
 from krkn_lib.models.telemetry import ScenarioTelemetry
+from krkn_lib.utils.functions import get_yaml_item_value, log_exception
+
 
 # Reads the scenario config, applies and deletes a network policy to
 # block the traffic for the specified duration
-def run(scenarios_list, config, wait_duration, telemetry: KrknTelemetry) -> (list[str], list[ScenarioTelemetry]):
+def run(scenarios_list, config, wait_duration, telemetry: KrknTelemetryKubernetes) -> (list[str], list[ScenarioTelemetry]):
     failed_post_scenarios = ""
     scenario_telemetries: list[ScenarioTelemetry] = []
     failed_scenarios = []
@@ -23,10 +25,18 @@ def run(scenarios_list, config, wait_duration, telemetry: KrknTelemetry) -> (lis
                 with open(app_outage_config, "r") as f:
                     app_outage_config_yaml = yaml.full_load(f)
                     scenario_config = app_outage_config_yaml["application_outage"]
-                    pod_selector = scenario_config.get("pod_selector", "{}")
-                    traffic_type = scenario_config.get("block", "[Ingress, Egress]")
-                    namespace = scenario_config.get("namespace", "")
-                    duration = scenario_config.get("duration", 60)
+                    pod_selector = get_yaml_item_value(
+                        scenario_config, "pod_selector", "{}"
+                    )
+                    traffic_type = get_yaml_item_value(
+                        scenario_config, "block", "[Ingress, Egress]"
+                    )
+                    namespace = get_yaml_item_value(
+                        scenario_config, "namespace", ""
+                    )
+                    duration = get_yaml_item_value(
+                        scenario_config, "duration", 60
+                    )
 
                     start_time = int(time.time())
 
@@ -67,7 +77,7 @@ spec:
             except Exception as e :
                 scenario_telemetry.exitStatus = 1
                 failed_scenarios.append(app_outage_config)
-                telemetry.log_exception(app_outage_config)
+                log_exception(app_outage_config)
             else:
                 scenario_telemetry.exitStatus = 0
             scenario_telemetry.endTimeStamp = time.time()

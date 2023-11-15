@@ -3,11 +3,11 @@ import logging
 import time
 from ..node_actions.aws_node_scenarios import AWS
 from ..cerberus import setup as cerberus
-from krkn_lib.telemetry import KrknTelemetry
+from krkn_lib.telemetry.k8s import KrknTelemetryKubernetes
 from krkn_lib.models.telemetry import ScenarioTelemetry
+from krkn_lib.utils.functions import log_exception
 
-
-def run(scenarios_list, config, wait_duration, telemetry: KrknTelemetry) -> (list[str], list[ScenarioTelemetry]) :
+def run(scenarios_list, config, wait_duration, telemetry: KrknTelemetryKubernetes) -> (list[str], list[ScenarioTelemetry]) :
     """
     filters the subnet of interest and applies the network acl
     to create zone outage
@@ -112,7 +112,7 @@ def run(scenarios_list, config, wait_duration, telemetry: KrknTelemetry) -> (lis
         except (RuntimeError, Exception):
             scenario_telemetry.exitStatus = 1
             failed_scenarios.append(zone_outage_config)
-            telemetry.log_exception(zone_outage_config)
+            log_exception(zone_outage_config)
         else:
             scenario_telemetry.exitStatus = 0
         scenario_telemetry.endTimeStamp = time.time()

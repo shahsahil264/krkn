@@ -13,9 +13,10 @@ from kraken.plugins.run_python_plugin import run_python_file
 from kraken.plugins.network.ingress_shaping import network_chaos
 from kraken.plugins.pod_network_outage.pod_network_outage_plugin import pod_outage
 from kraken.plugins.pod_network_outage.pod_network_outage_plugin import pod_egress_shaping
-from krkn_lib.telemetry import KrknTelemetry
+from krkn_lib.telemetry.k8s import KrknTelemetryKubernetes
+from kraken.plugins.pod_network_outage.pod_network_outage_plugin import pod_ingress_shaping
 from krkn_lib.models.telemetry import ScenarioTelemetry
-
+from krkn_lib.utils.functions import log_exception
 
 
 @dataclasses.dataclass
@@ -223,25 +224,31 @@ PLUGINS = Plugins(
             [
                 "error"
             ]
-        )       
+        ),
+         PluginStep(
+            pod_ingress_shaping,
+            [
+                "error"
+            ]
+        )                  
     ]
 )
 
 
-def run(scenarios: List[str], kubeconfig_path: str, kraken_config: str, failed_post_scenarios: List[str], wait_duration: int, telemetry: KrknTelemetry) -> (List[str], list[ScenarioTelemetry]):
+def run(scenarios: List[str], kubeconfig_path: str, kraken_config: str, failed_post_scenarios: List[str], wait_duration: int, telemetry: KrknTelemetryKubernetes) -> (List[str], list[ScenarioTelemetry]):
     scenario_telemetries: list[ScenarioTelemetry] = []
     for scenario in scenarios:
         scenario_telemetry = ScenarioTelemetry()
         scenario_telemetry.scenario = scenario
         scenario_telemetry.startTimeStamp = time.time()
         telemetry.set_parameters_base64(scenario_telemetry, scenario)
-        logging.info('scenario '+ str(scenario))
+        logging.info('scenario ' + str(scenario))
         try:
             PLUGINS.run(scenario, kubeconfig_path, kraken_config)
         except Exception as e:
             scenario_telemetry.exitStatus = 1
             failed_post_scenarios.append(scenario)
-            telemetry.log_exception(scenario)
+            log_exception(scenario)
         else:
             scenario_telemetry.exitStatus = 0
             logging.info("Waiting for the specified duration: %s" % (wait_duration))
